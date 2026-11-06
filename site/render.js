@@ -43,7 +43,7 @@ export function buttonForm({ action, token, label, method = 'POST', cls = 'btn',
 function header({ person, token, section }) {
   const link = (href, label, key) => html`<a href="${href}"${section === key ? raw(' aria-current="page"') : ''}>${label}</a>`;
   return html`<header class="bar">
-  <a class="brand" href="/"><span class="mark" aria-hidden="true"></span>Orbit Prototypes</a>
+  <a class="brand" href="/"><img class="mark" src="/logo.svg" alt="" width="24" height="24">Orbit Prototypes</a>
   ${person && html`<nav class="nav" aria-label="Main">${link('/', 'Features', 'home')}${person.admin && link('/people', 'People', 'people')}${person.admin && link('/settings', 'Settings', 'settings')}</nav>`}
   <div class="who">
     <button class="btn quiet" type="button" data-theme-toggle hidden>Dark</button>

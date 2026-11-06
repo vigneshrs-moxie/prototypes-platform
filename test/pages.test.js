@@ -220,7 +220,9 @@ test('every page points at the logo, and the files are there', onSite(async (s) 
   const { text } = await (await person(s, SAM)).page('/');
   assert.match(text, /<link rel="icon" href="\/favicon\.ico"/);
   assert.match(text, /<link rel="icon" href="\/icon\.png"/);
+  assert.match(text, /<img class="mark" src="\/logo\.svg"/);
   const bytes = (name) => fs.readFileSync(new URL(`../public/${name}`, import.meta.url));
   assert.deepEqual([...bytes('favicon.ico').subarray(0, 4)], [0, 0, 1, 0], 'an icon file');
   assert.equal(bytes('icon.png').subarray(1, 4).toString(), 'PNG');
+  assert.match(bytes('logo.svg').toString(), /^<svg /);
 }));

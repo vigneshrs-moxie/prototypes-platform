@@ -69,7 +69,7 @@ export default function authRoutes(ctx) {
           title: 'Sign in',
           plain: true,
           body: html`<section class="card signin">
-  <span class="mark big" aria-hidden="true"></span>
+  <img class="mark big" src="/logo.svg" alt="" width="56" height="56">
   <h1>Orbit Prototypes</h1>
   <p class="muted">See what’s being built, and leave notes on it.</p>
   ${problem && html`<p class="notice" role="status">${problem}</p>`}

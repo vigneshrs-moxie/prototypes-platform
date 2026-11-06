@@ -34,8 +34,8 @@ small { display: block; font-size: 13px; color: var(--muted); }
 
 .bar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; padding: 10px 24px; background: var(--surface); border-bottom: 1px solid var(--line); }
 .brand { display: inline-flex; align-items: center; gap: 8px; color: var(--fg); font-weight: 650; text-decoration: none; }
-.mark { width: 22px; height: 22px; border-radius: 50%; border: 5px solid var(--primary); display: inline-block; }
-.mark.big { width: 44px; height: 44px; border-width: 10px; }
+.mark { display: inline-block; flex: none; width: 24px; height: 24px; }
+.mark.big { width: 56px; height: 56px; }
 .nav { display: flex; gap: 4px; flex: 1; }
 .nav a { padding: 5px 10px; border-radius: 8px; color: var(--muted); text-decoration: none; font-weight: 500; }
 .nav a:hover { background: var(--soft); }
