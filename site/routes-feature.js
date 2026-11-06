@@ -1,8 +1,7 @@
 // A feature's page and the pages around it.
-//   GET  /f/<key>                 the feature (a shell: P5 fills the frame), or Request access
+//   GET  /f/<key>                 the feature with its prototype in the frame, or Request access
 //   POST /f/<key>/request-access  records the request
-// The page, the PDF, and the Requirements and Decisions pages are P5's; until then they check
-// access and say "not yet", and the blob is never sent.
+// The page in the frame, the PDF, and the Requirements and Decisions pages are in routes-page.js.
 //
 // Someone who can't see a feature gets the same Request access page whether or not it exists, and
 // nothing about it: not its title, not its ticket. Only an admin ever gets a 404.
@@ -68,20 +67,25 @@ export function featureHeader({ feature, person, section, noteCount, r }) {
   <a class="${here('prototype')}" href="/f/${feature.key}${suffix}">Prototype</a>
   <a class="${here('requirements')}" href="/f/${feature.key}/requirements${suffix}">Requirements</a>
   <a class="${here('decisions')}" href="/f/${feature.key}/decisions${suffix}">Decisions</a>
-  <span class="tab count">${count(noteCount, 'note')}</span>
+  <span class="tab count" data-note-count>${count(noteCount, 'note')}</span>
 </nav>`;
 }
 
+export const noteCount = async (db, feature) => (await db.query('SELECT count(*)::int AS n FROM notes WHERE feature_id = $1 AND deleted_at IS NULL', [feature.id])).rows[0].n;
+
+/**
+ * The prototype in its frame. sandbox has allow-scripts and nothing else: with allow-same-origin the
+ * page could reach this site as the person looking at it. wrapper.js comes first, so it's listening
+ * before the page's first message.
+ */
+const frame = ({ feature, n }) => html`<section class="frame-area live" data-frame data-key="${feature.key}" data-rev="${n}">
+  <script src="/wrapper.js"></script>
+  <iframe sandbox="allow-scripts" src="/f/${feature.key}/r${n}/page" title="${feature.title}, revision ${n}"></iframe>
+  <p class="notice bad" data-frame-status role="alert" hidden></p>
+</section>`;
+
 export default function featureRoutes(ctx) {
   const { db, now } = ctx;
-  const noteCount = async (feature) => (await db.query('SELECT count(*)::int AS n FROM notes WHERE feature_id = $1 AND deleted_at IS NULL', [feature.id])).rows[0].n;
-
-  /** What P5 replaces: it checks access exactly as the real page will. */
-  const notYet = (word) => async (call) => {
-    const feature = await featureOr403(ctx, call, call.m[1]);
-    if (!feature) return;
-    throw new HttpError(404, `${word} isn’t on the site yet.`);
-  };
 
   return [
     {
@@ -102,13 +106,11 @@ export default function featureRoutes(ctx) {
         if (latest && !revision) throw new HttpError(404, `This feature has no revision ${url.searchParams.get('r')}.`);
         sendHtml(res, 200, layout({
           title: feature.title, person, token,
-          body: html`${featureHeader({ feature, person, section: 'prototype', noteCount: await noteCount(feature), r: asked === latest ? null : asked })}
+          body: html`${featureHeader({ feature, person, section: 'prototype', noteCount: await noteCount(db, feature), r: asked === latest ? null : asked })}
 ${revisions.length > 1 && html`<nav class="revisions" aria-label="Revisions">${revisions.map((r) => html`<a class="chip" href="/f/${feature.key}?r=${r.n}"${r.n === asked ? html` aria-current="true"` : ''}>Revision ${r.n}${r.n === latest && ' (latest)'}</a>`)}</nav>`}
-<section class="frame-area" data-page="/f/${feature.key}/r${asked}/page">
-  ${revision
-    ? html`<p class="muted">Revision ${asked}, published ${dateLabel(revision.published_at)}. The prototype will open here.</p>`
-    : html`<p class="muted">Nothing is published here yet.</p>`}
-</section>
+${revision
+  ? html`${frame({ feature, n: asked })}<p class="muted">Revision ${asked}, published ${dateLabel(revision.published_at)}.${revision.has_pdf ? '' : ' This revision has no PDF.'}</p>`
+  : html`<section class="frame-area"><p class="muted">Nothing is published here yet.</p></section>`}
 ${revision && whatsNew(revision)}`,
         }));
       },
@@ -126,9 +128,5 @@ ${revision && whatsNew(revision)}`,
         sendHtml(res, 200, askPage({ person, token, key, asked: true }));
       },
     },
-    { method: 'GET', path: new RegExp(`^/f/${KEY}/r\\d{1,6}/page$`), auth: 'session', run: notYet('The prototype page') },
-    { method: 'GET', path: new RegExp(`^/f/${KEY}/r\\d{1,6}/pack\\.pdf$`), auth: 'session', run: notYet('The PDF') },
-    { method: 'GET', path: new RegExp(`^/f/${KEY}/requirements$`), auth: 'session', run: notYet('The requirements page') },
-    { method: 'GET', path: new RegExp(`^/f/${KEY}/decisions$`), auth: 'session', run: notYet('The decisions page') },
   ];
 }

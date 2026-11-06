@@ -20,7 +20,7 @@
 
 import fsp from 'node:fs/promises';
 import path from 'node:path';
-import { HttpError, redirect, readForm, send, sendHtml, sendJson, SITE_HEADERS } from './http.js';
+import { FRAME_GONE, HttpError, PAGE_HEADERS, redirect, readForm, send, sendHtml, sendJson, SITE_HEADERS } from './http.js';
 import { html, layout } from './render.js';
 import authRoutes, { signInFirst } from './routes-auth.js';
 import homeRoutes from './routes-home.js';
@@ -29,13 +29,15 @@ import shareRoutes from './routes-shares.js';
 import settingsRoutes from './routes-settings.js';
 import publishRoutes from './routes-publish.js';
 import apiRoutes from './routes-api.js';
+import pageRoutes from './routes-page.js';
+import notesRoutes from './routes-notes.js';
 import { tokenAuth } from './tokens.js';
 
 const WRITES = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 const TYPES = { '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon' };
 
-/** The lists of routes, in the order they are tried. P5 adds its own. */
-export const ROUTE_LISTS = [authRoutes, homeRoutes, shareRoutes, featureRoutes, settingsRoutes, publishRoutes, apiRoutes];
+/** The lists of routes, in the order they are tried. */
+export const ROUTE_LISTS = [authRoutes, homeRoutes, shareRoutes, featureRoutes, pageRoutes, settingsRoutes, publishRoutes, apiRoutes, notesRoutes];
 
 export function createSite({ db, config, blob, fetch: fetchFn = globalThis.fetch, now = () => Date.now(), staticDir = null, extraRoutes = [], log = (line) => console.log(JSON.stringify(line)) }) {
   const closers = [];
@@ -153,6 +155,10 @@ export function createSite({ db, config, blob, fetch: fetchFn = globalThis.fetch
       const status = err instanceof HttpError ? err.status : 500;
       const words = err instanceof HttpError ? err.message : 'Something went wrong on the site. Try again in a moment.';
       if (isApi) return sendJson(res, status, { error: words, ...(err.extra ?? {}) });
+      if (status === 401 && req.headers['sec-fetch-dest'] === 'iframe') {
+        res.writeHead(401, { ...PAGE_HEADERS, 'Content-Type': 'text/html; charset=utf-8' });
+        return res.end(FRAME_GONE);
+      }
       if (status === 401) return redirect(res, signInFirst(url.pathname + url.search));
       return errorPage(res, call, status, words);
     } finally {

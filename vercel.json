@@ -10,7 +10,7 @@
   },
   "headers": [
     {
-      "source": "/site.(css|js)",
+      "source": "/(site.css|site.js|wrapper.js)",
       "headers": [
         { "key": "Content-Security-Policy", "value": "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; font-src 'self'; frame-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'" },
         { "key": "X-Content-Type-Options", "value": "nosniff" },

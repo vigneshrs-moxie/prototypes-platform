@@ -3,7 +3,7 @@
 //   GET  /api/features/<key>/notes    notes and picks, ?since=<iso> for what changed after it
 //   POST /api/features/<key>/notes    the pilot's one-time import; the only way to set by_label
 //
-// The browser's note writes (P5) are a session route on the same address, so P5 adds that branch.
+// The browser's note writes are in routes-notes.js, at an address of their own.
 
 import { HttpError, readJson, sendJson } from './http.js';
 import { iso } from './sessions.js';

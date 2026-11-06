@@ -30,6 +30,29 @@ export const SITE_HEADERS = Object.freeze({
   'Cache-Control': 'no-store',
 });
 
+/**
+ * The prototype page's own policy (plan §7). It is a model-written file with its own scripts, so it
+ * gets no cookie, no storage, no network and no way to be the top page. `sandbox allow-scripts` says
+ * in the response what the frame's attribute says, so a browser that sends no Sec-Fetch-Dest and
+ * opens the page directly still runs it with an opaque origin.
+ */
+export const PAGE_CSP = "default-src 'none'; script-src 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'; sandbox allow-scripts";
+
+/**
+ * What a frame gets in place of the page when its request has no session. Back into an entry from before a
+ * reload makes the frame fetch the page itself; its origin is opaque, so that is cross-site and the cookie
+ * stays behind. Sign-in can't show in a frame, so this holds no data and asks the wrapper to keep going Back.
+ */
+export const FRAME_GONE = `<!doctype html><meta charset="utf-8"><script>parent.postMessage({ type: 'wireframes-gone' }, '*')</script>`;
+
+export const PAGE_HEADERS = Object.freeze({
+  'Content-Security-Policy': PAGE_CSP,
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'no-referrer',
+  'Strict-Transport-Security': 'max-age=31536000',
+  'Cache-Control': 'no-store',
+});
+
 export function send(res, status, body = '', type = 'text/plain; charset=utf-8', extra = {}) {
   if (res.headersSent) { res.end(); return; }
   const headers = { ...SITE_HEADERS, ...extra };

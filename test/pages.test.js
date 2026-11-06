@@ -108,22 +108,12 @@ test('what a publish says is text on every page, never markup', onSite(async (s)
   }
 }));
 
-test('the prototype page and the PDF aren’t served yet, and the blob never is', onSite(async (s) => {
-  const { ada, key } = await withFeature(s, publishFields({ pdf: { filename: 'pack.pdf', type: 'application/pdf', data: '%PDF-secret' } }));
-  for (const path of [`/f/${key}/r1/page`, `/f/${key}/r1/pack.pdf`]) {
-    const r = await ada.page(path);
-    assert.equal(r.status, 404, path);
-    assert.doesNotMatch(r.text, /made up<\/title>|%PDF-secret/, path);
-    assert.match(r.text, /isn’t on the site yet/, path);
-  }
-}));
-
 test('strict headers on every answer: pages, errors, redirects, sign-in and the API', onSite(async (s) => {
   const { ada, key, token } = await withFeature(s);
   const stu = await person(s, STU);
   const answers = [
     await ada.get('/'), await ada.get(`/f/${key}`), await ada.get(`/f/${key}/shares`), await ada.get('/settings'), await ada.get('/people'),
-    await ada.get(`/f/${key}/r1/page`), await ada.get('/nowhere'), await stu.get(`/f/${key}`), await stu.get('/settings'),
+    await ada.get(`/f/${key}/requirements`), await ada.get('/nowhere'), await stu.get(`/f/${key}`), await stu.get('/settings'),
     await browser(s.fetch).get('/'), await browser(s.fetch).get('/sign-in'), await browser(s.fetch).get('/healthz'),
     (await withToken(s, token, '/api/features')).res, await ada.post(`/f/${key}/shares`, { email: SAM }),
   ];
@@ -182,7 +172,7 @@ test('a signed-out change goes to sign in and changes nothing', onSite(async (s)
 test('healthz: open to anyone, with the migration number', onSite(async (s) => {
   const r = await browser(s.fetch).get('/healthz');
   assert.equal(r.status, 200);
-  assert.deepEqual(await r.json(), { ok: true, migration: '005-tokens' });
+  assert.deepEqual(await r.json(), { ok: true, migration: '006-page-state' });
 }));
 
 test('with a setting missing, every page says which, and healthz still answers', onSite(async (s) => {
@@ -196,14 +186,14 @@ test('with a setting missing, every page says which, and healthz still answers',
 test('migrations run clean twice: the second applies nothing', onSite(async (s) => {
   const again = await migrate(s.db);
   assert.deepEqual(again.applied, []);
-  assert.equal(again.already, 5);
+  assert.equal(again.already, 6);
 }));
 
 test('there is no role column, and no table the plan doesn’t name', onSite(async (s) => {
   const cols = (await s.db.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'people' AND table_schema = current_schema()")).rows.map((r) => r.column_name);
   assert.ok(!cols.includes('role'));
   const tables = (await s.db.query("SELECT table_name FROM information_schema.tables WHERE table_schema = current_schema() ORDER BY 1")).rows.map((r) => r.table_name);
-  assert.deepEqual(tables, ['access_requests', 'choices', 'documents', 'features', 'notes', 'people', 'publish_tokens', 'revisions', 'schema_migrations', 'sessions', 'shares', 'sign_ins']);
+  assert.deepEqual(tables, ['access_requests', 'choices', 'documents', 'features', 'notes', 'people', 'publish_tokens', 'revisions', 'schema_migrations', 'sessions', 'shares', 'sign_ins', 'views']);
 }));
 
 test('logs carry route, status, person and key: no tokens, note text or emails', async () => {

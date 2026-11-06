@@ -88,6 +88,13 @@ a.tab:hover { color: var(--fg); }
 .chip { padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--fg); font-size: 13px; text-decoration: none; }
 .chip[aria-current] { background: var(--soft); font-weight: 600; }
 .frame-area { display: grid; place-items: center; min-height: 320px; margin-top: 16px; padding: 24px; text-align: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); }
+.frame-area.live { display: block; padding: 0; overflow: hidden; }
+.frame-area.live iframe { display: block; width: 100%; height: calc(100dvh - 200px); min-height: 560px; border: 0; }
+.frame-area.live .notice { margin: 0; border-radius: 0; }
+.page:has(.frame-area.live) { max-width: none; }
+.doc { overflow-x: auto; }
+.doc table { border-collapse: collapse; width: 100%; }
+.doc th, .doc td { padding: 6px 10px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
 .changes { display: grid; grid-template-columns: max-content 1fr; gap: 2px 12px; margin: 8px 0 0; }
 .changes dt { font-weight: 600; }
 .changes dd { margin: 0; color: var(--muted); }
