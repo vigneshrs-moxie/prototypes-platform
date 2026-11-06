@@ -1,0 +1,27 @@
+{
+  "name": "prototypes-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "prototypes.moxieorbit.com: a folder per feature holding its prototype, requirements, decisions and notes.",
+  "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "dev": "node dev.js",
+    "migrate": "node scripts/migrate.js",
+    "test": "node --test \"test/*.test.js\""
+  },
+  "dependencies": {
+    "@vercel/blob": "2.8.2",
+    "jose": "6.2.12",
+    "markdown-it": "15.0.3",
+    "pg": "8.23.1"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.9"
+  },
+  "overrides": {
+    "zod": "^4.6.6"
+  }
+}
