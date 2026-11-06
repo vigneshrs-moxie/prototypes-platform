@@ -60,6 +60,8 @@ export function layout({ title, person = null, token = '', section = '', body, p
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${title} · Orbit Prototypes</title>
+<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="icon" href="/icon.png" type="image/png" sizes="256x256">
 <link rel="stylesheet" href="/site.css">
 <script src="/site.js"></script>
 </head>
