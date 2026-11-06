@@ -52,8 +52,8 @@ function header({ person, token, section }) {
 </header>`;
 }
 
-/** A whole page. person and token are empty on the sign-in page. */
-export function layout({ title, person = null, token = '', section = '', body, plain = false }) {
+/** A whole page. person and token are empty on the sign-in page. stage: the whole window is body's, with no site header. */
+export function layout({ title, person = null, token = '', section = '', body, plain = false, stage = false }) {
   return html`<!doctype html>
 <html lang="en">
 <head>
@@ -64,8 +64,8 @@ export function layout({ title, person = null, token = '', section = '', body, p
 <script src="/site.js"></script>
 </head>
 <body>
-${!plain && header({ person, token, section })}
-<main class="${plain ? 'center' : 'page'}">${body}</main>
+${!plain && !stage && header({ person, token, section })}
+<main class="${stage ? 'stage' : plain ? 'center' : 'page'}">${body}</main>
 </body>
 </html>
 `;

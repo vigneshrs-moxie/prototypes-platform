@@ -10,7 +10,7 @@ const CODE = fs.readFileSync(new URL('../public/wrapper.js', import.meta.url), '
 const NOTE = { id: 'ntemp', screen: 's-team', device: 'phone', kind: 'change', text: 'Too tight', pin: null };
 const STATE = { me: { id: '2', name: 'Sam', admin: false }, notes: [], choices: {}, others: [], pdf: '/f/k/r3/pack.pdf', view: {} };
 
-function page({ answers = [], state = STATE } = {}) {
+function page({ answers = [], state = STATE, how } = {}) {
   const sent = [];
   const calls = [];
   const clicks = [];
@@ -36,6 +36,7 @@ function page({ answers = [], state = STATE } = {}) {
       const a = answers.shift() ?? { status: 200, body: state };
       return { ok: a.status < 400, status: a.status, json: async () => a.body };
     },
+    performance: how ? { getEntriesByType: () => [{ type: how }] } : undefined,
     Object, Promise, Error, JSON, Map, String, console,
   };
   vm.runInNewContext(CODE, context);
@@ -181,4 +182,29 @@ test('a frame that loads a second time gets the state again', async () => {
   assert.equal(states(p).length, 1, 'the first load is the one it already answered');
   await p.loaded();
   assert.equal(states(p).length, 2);
+});
+
+test('opened from a link, the page starts on its first tab and keeps the rest of its settings', async () => {
+  const view = { page: 'prototype', dev: 'phone', theme: 'dark' };
+  const p = page({ state: { ...STATE, view }, how: 'navigate' });
+  await p.fromPage({ type: 'wireframes', version: '4', current: 'overview', screens: [] });
+  assert.deepEqual({ ...states(p)[0].m.view }, { side: false, dev: 'phone', theme: 'dark' });
+});
+
+test('the notes panel starts closed, and stays open for someone who opened it', async () => {
+  const fresh = page();
+  await fresh.fromPage({ type: 'wireframes', version: '4', current: 'overview', screens: [] });
+  assert.equal(states(fresh)[0].m.view.side, false);
+  const open = page({ state: { ...STATE, view: { side: true } } });
+  await open.fromPage({ type: 'wireframes', version: '4', current: 'overview', screens: [] });
+  assert.equal(states(open)[0].m.view.side, true);
+});
+
+test('a reload or the browser’s Back keeps the tab that was open', async () => {
+  const view = { page: 'prototype', dev: 'phone' };
+  for (const how of ['reload', 'back_forward']) {
+    const p = page({ state: { ...STATE, view }, how });
+    await p.fromPage({ type: 'wireframes', version: '4', current: 'overview', screens: [] });
+    assert.equal(states(p)[0].m.view.page, 'prototype', how);
+  }
 });

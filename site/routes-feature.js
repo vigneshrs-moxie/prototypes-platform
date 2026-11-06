@@ -84,6 +84,37 @@ const frame = ({ feature, n }) => html`<section class="frame-area live" data-fra
   <p class="notice bad" data-frame-status role="alert" hidden></p>
 </section>`;
 
+/**
+ * All the site shows around a prototype: the way back, and one menu for everything else. The page
+ * has its own header and tabs, so a second header here would only shrink it.
+ */
+function stageBar({ feature, person, revisions, revision, latest, notes }) {
+  const n = revision.n;
+  const suffix = n === latest ? '' : `?r=${n}`;
+  return html`<header class="stage-bar">
+  <a class="stage-back" href="/">← Features</a>
+  <h1 class="sr-only">${feature.title}</h1>
+  ${n !== latest && html`<span class="stage-old">Revision ${n}, not the latest. <a href="/f/${feature.key}">See the latest</a></span>`}
+  <details class="stage-more">
+    <summary>More</summary>
+    <div class="stage-menu">
+      <p class="muted">
+        ${feature.ticket_url ? html`<a href="${feature.ticket_url}" rel="noopener noreferrer">${feature.ticket_key || 'Ticket'}</a> · ` : feature.ticket_key && `${feature.ticket_key} · `}
+        Updated ${dateLabel(feature.updated_at)}${feature.archived_at && ' · Archived'}
+      </p>
+      <p class="muted">Revision ${n}, published ${dateLabel(revision.published_at)}.${revision.has_pdf ? '' : ' This revision has no PDF.'} <span data-note-count>${count(notes, 'note')}</span>.</p>
+      <nav class="stage-links" aria-label="This feature">
+        <a href="/f/${feature.key}/requirements${suffix}">Requirements</a>
+        <a href="/f/${feature.key}/decisions${suffix}">Decisions</a>
+        ${person.admin && html`<a href="/f/${feature.key}/shares">Sharing</a>`}
+      </nav>
+      ${revisions.length > 1 && html`<nav class="revisions" aria-label="Revisions">${revisions.map((r) => html`<a class="chip" href="/f/${feature.key}?r=${r.n}"${r.n === n ? html` aria-current="true"` : ''}>Revision ${r.n}${r.n === latest && ' (latest)'}</a>`)}</nav>`}
+      ${whatsNew(revision)}
+    </div>
+  </details>
+</header>`;
+}
+
 export default function featureRoutes(ctx) {
   const { db, now } = ctx;
 
@@ -104,14 +135,18 @@ export default function featureRoutes(ctx) {
         const asked = url.searchParams.has('r') ? Number(url.searchParams.get('r')) : latest;
         const revision = revisions.find((r) => r.n === asked);
         if (latest && !revision) throw new HttpError(404, `This feature has no revision ${url.searchParams.get('r')}.`);
+        const notes = await noteCount(db, feature);
+        if (!revision) {
+          sendHtml(res, 200, layout({
+            title: feature.title, person, token,
+            body: html`${featureHeader({ feature, person, section: 'prototype', noteCount: notes, r: null })}
+<section class="frame-area"><p class="muted">Nothing is published here yet.</p></section>`,
+          }));
+          return;
+        }
         sendHtml(res, 200, layout({
-          title: feature.title, person, token,
-          body: html`${featureHeader({ feature, person, section: 'prototype', noteCount: await noteCount(db, feature), r: asked === latest ? null : asked })}
-${revisions.length > 1 && html`<nav class="revisions" aria-label="Revisions">${revisions.map((r) => html`<a class="chip" href="/f/${feature.key}?r=${r.n}"${r.n === asked ? html` aria-current="true"` : ''}>Revision ${r.n}${r.n === latest && ' (latest)'}</a>`)}</nav>`}
-${revision
-  ? html`${frame({ feature, n: asked })}<p class="muted">Revision ${asked}, published ${dateLabel(revision.published_at)}.${revision.has_pdf ? '' : ' This revision has no PDF.'}</p>`
-  : html`<section class="frame-area"><p class="muted">Nothing is published here yet.</p></section>`}
-${revision && whatsNew(revision)}`,
+          title: feature.title, person, token, stage: true,
+          body: html`${stageBar({ feature, person, revisions, revision, latest, notes })}${frame({ feature, n: asked })}`,
         }));
       },
     },

@@ -51,10 +51,19 @@
     return data;
   }
 
+  // Coming from a link, the page starts on its first tab, whatever tab was open last time. A reload
+  // or the browser's Back keeps the person's place. The notes panel starts closed, so the prototype
+  // gets the room; once someone has opened it, that's saved and it stays open for them.
+  const how = globalThis.performance?.getEntriesByType?.('navigation')?.[0]?.type;
+  let startFresh = how !== 'reload' && how !== 'back_forward';
+
   function show(next) {
     const { created, ...fresh } = next;
     state = fresh;
-    toPage({ type: 'wireframes-state', ...fresh });
+    const { page, ...kept } = fresh.view ?? {};
+    const view = { side: false, ...(startFresh ? kept : fresh.view) };
+    toPage({ type: 'wireframes-state', ...fresh, view });
+    startFresh = false;
     const label = document.querySelector('[data-note-count]');
     if (label) label.textContent = `${fresh.notes.length} note${fresh.notes.length === 1 ? '' : 's'}`;
   }

@@ -88,10 +88,26 @@ a.tab:hover { color: var(--fg); }
 .chip { padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--fg); font-size: 13px; text-decoration: none; }
 .chip[aria-current] { background: var(--soft); font-weight: 600; }
 .frame-area { display: grid; place-items: center; min-height: 320px; margin-top: 16px; padding: 24px; text-align: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); }
-.frame-area.live { display: block; padding: 0; overflow: hidden; }
-.frame-area.live iframe { display: block; width: 100%; height: calc(100dvh - 200px); min-height: 560px; border: 0; }
-.frame-area.live .notice { margin: 0; border-radius: 0; }
-.page:has(.frame-area.live) { max-width: none; }
+/* The prototype has the window: its own header and tabs are the page's header. */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+html:has(.stage), body:has(.stage) { height: 100%; overflow: hidden; }
+.stage { display: flex; flex-direction: column; height: 100dvh; }
+.stage-bar { flex: none; display: flex; align-items: center; gap: 12px; height: 32px; padding: 0 12px; background: var(--surface); border-bottom: 1px solid var(--line); font-size: 13px; }
+.stage-back { color: var(--muted); text-decoration: none; font-weight: 500; }
+.stage-back:hover { color: var(--fg); }
+.stage-old { color: var(--warn-fg); }
+.stage-more { position: relative; margin-left: auto; }
+.stage-more summary { cursor: pointer; color: var(--muted); font-weight: 500; }
+.stage-more summary:hover, .stage-more[open] summary { color: var(--fg); }
+/* A click anywhere else closes the menu: this sits over the frame too, which clicks can't cross. */
+.stage-more[open] summary::before { content: ""; position: fixed; inset: 0; z-index: 9; cursor: default; }
+.stage-menu { position: absolute; top: 26px; right: 0; z-index: 10; width: min(360px, calc(100vw - 24px)); max-height: calc(100dvh - 48px); overflow: auto; padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); }
+.stage-menu p { margin: 0 0 8px; }
+.stage-menu .block { margin-top: 12px; }
+.stage-links { display: flex; flex-wrap: wrap; gap: 14px; }
+.frame-area.live { position: relative; display: block; flex: 1; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 0; box-shadow: none; overflow: hidden; }
+.frame-area.live iframe { display: block; width: 100%; height: 100%; border: 0; }
+.frame-area.live .notice { position: absolute; left: 12px; right: 12px; bottom: 12px; margin: 0; }
 .doc { overflow-x: auto; }
 .doc table { border-collapse: collapse; width: 100%; }
 .doc th, .doc td { padding: 6px 10px; border: 1px solid var(--line); text-align: left; vertical-align: top; }

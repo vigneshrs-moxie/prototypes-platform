@@ -88,6 +88,33 @@ test('the feature page embeds the page sandboxed, allow-scripts and nothing else
   assert.match((await ada.page(`/f/${key}`)).text, new RegExp(`src="/f/${key}/r2/page"`), 'the latest, with no r');
 }));
 
+test('the prototype has the window: no site header, a way back, and the rest under More', onSite(async (s) => {
+  const { ada, key } = await withFeature(s);
+  const { text } = await ada.page(`/f/${key}`);
+  assert.match(text, /<main class="stage">/);
+  assert.doesNotMatch(text, /<header class="bar">/);
+  assert.doesNotMatch(text, /class="feature-head"/);
+  assert.match(text, /<a class="stage-back" href="\/">/);
+  assert.match(text, /<h1 class="sr-only">/, 'a screen reader still hears the title');
+  for (const href of [`/f/${key}/requirements`, `/f/${key}/decisions`, `/f/${key}/shares`]) assert.ok(text.includes(`href="${href}"`), href);
+}));
+
+test('someone who isn’t an admin gets no Sharing link', onSite(async (s) => {
+  const { ada, key } = await withFeature(s);
+  await ada.post(`/f/${key}/shares`, { email: SAM });
+  const sam = await person(s, SAM);
+  assert.doesNotMatch((await sam.page(`/f/${key}`)).text, /Sharing/);
+}));
+
+test('an older revision says so in words, with the way to the latest', onSite(async (s) => {
+  const { ada, key, token } = await withFeature(s);
+  await publish(s, token, publishFields({ page_version: '2' }));
+  const old = (await ada.page(`/f/${key}?r=1`)).text;
+  assert.match(old, /Revision 1, not the latest\./);
+  assert.match(old, /See the latest/);
+  assert.doesNotMatch((await ada.page(`/f/${key}`)).text, /not the latest/);
+}));
+
 test('the page says in words when a revision has no PDF', onSite(async (s) => {
   const { ada, key } = await withFeature(s);
   assert.match((await ada.page(`/f/${key}`)).text, /This revision has no PDF\./);
